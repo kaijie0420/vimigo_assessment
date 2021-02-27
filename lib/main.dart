@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:vimigo_assessment/model/contact_details.dart';
-import 'package:vimigo_assessment/add_contact.dart';
+import 'model/contact_details.dart';
+import 'add_contact.dart';
+import 'view_contact.dart';
 
 void main() {
   runApp(MyApp());
@@ -20,8 +21,8 @@ class MyApp extends StatelessWidget {
       ),
       home: MyHomePage(title: 'Contact List'),
       routes: {
-        // '/': (context) => _login,
         '/addContact': (context) => AddContactPage(),
+        '/viewContact': (context) => ViewContactPage(),
       },
     );
   }
@@ -124,7 +125,22 @@ class _MyHomePageState extends State<MyHomePage> {
     } else {
       list = _contactDetails;
     }
-    return list.asMap().map((index, item) => MapEntry(index, ListTile(key: Key("$index"), title: Text("${item.user}"), trailing: Icon(Icons.menu)))).values.toList();
+    return list.asMap().map((index, item) {
+      return MapEntry(
+        index, 
+        ListTile(
+          key: Key("$index"), 
+          title: Text("${item.user}"), 
+          onTap: () {
+            Navigator.pushNamed(
+              context, 
+              '/viewContact',
+              arguments: item,
+            );
+          },
+        ),
+      );
+    }).values.toList();
   }
 
   onSearchTextChanged(String text) async {
