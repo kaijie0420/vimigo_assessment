@@ -42,7 +42,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<ContactDetails> _contactDetails = [];
   List<ContactDetails> _searchResult = [];
 
-  Future getContactDetails() async {
+  Future _getContactDetails() async {
     String data = await rootBundle.loadString('assets/contacts.json');
     final jsonResult = json.decode(data);
 
@@ -56,7 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    getContactDetails();
+    _getContactDetails();
   }
 
   @override
@@ -90,19 +90,17 @@ class _MyHomePageState extends State<MyHomePage> {
           )
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final addedContact = await Navigator.pushNamed(context, '/addContact');
-
-          if (addedContact != null) {
-            setState(() {
-              _contactDetails.add(addedContact);
-            });
-          }
+      floatingActionButton: Builder(
+        builder: (context) {
+          return FloatingActionButton(
+            onPressed: () {
+              _toAddContactPage(context);
+            },
+            child: Icon(Icons.add),
+            backgroundColor: Colors.green,
+          );
         },
-        child: Icon(Icons.add),
-        backgroundColor: Colors.green,
-      ),
+      )
     );
   }
 
@@ -143,5 +141,18 @@ class _MyHomePageState extends State<MyHomePage> {
     });
 
     setState(() {});
+  }
+
+  _toAddContactPage(BuildContext context) async {
+    final addedContact = await Navigator.pushNamed(context, '/addContact');
+
+    if (addedContact != null) {
+      setState(() {
+        _contactDetails.add(addedContact);
+        Scaffold.of(context).showSnackBar(SnackBar(
+          content: Text("New contact added."),
+        ));
+      });
+    }
   }
 }
