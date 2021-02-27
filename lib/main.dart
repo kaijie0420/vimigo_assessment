@@ -32,7 +32,10 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  TextEditingController controller = new TextEditingController();
+
   List<ContactDetails> _contactDetails = [];
+  List<ContactDetails> _searchResult = [];
 
   Future getContactDetails() async {
     String data = await rootBundle.loadString('assets/contacts.json');
@@ -58,10 +61,30 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: ReorderableListView(
-        onReorder: onReorder,
-        children: getContactList(),
-      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: new Card(
+              child: new ListTile(
+                leading: new Icon(Icons.search),
+                title: new TextField(
+                  controller: controller,
+                  decoration: new InputDecoration(
+                      hintText: 'Search', border: InputBorder.none),
+                  onChanged: onSearchTextChanged,
+                ),
+              ),
+            ),
+          ),
+          Expanded(child: 
+            ReorderableListView(
+              onReorder: onReorder,
+              children: getContactList(),
+            ),
+          )
+        ],
+      )
     );
   }
 
@@ -79,6 +102,28 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   getContactList() {
-    return _contactDetails.map((item) => ListTile(key: Key("${item.id}"), title: Text("${item.user}"), trailing: Icon(Icons.menu),)).toList();
+    List<ContactDetails> list = [];
+    if (_searchResult.length != 0 || controller.text.isNotEmpty) {
+      list = _searchResult;
+    } else {
+      list = _contactDetails;
+    }
+    return list.map((item) => ListTile(key: Key("${item.id}"), title: Text("${item.user}"), trailing: Icon(Icons.menu),)).toList();
+  }
+
+  onSearchTextChanged(String text) async {
+    _searchResult.clear();
+    if (text.isEmpty) {
+      setState(() {});
+      return;
+    }
+
+    _contactDetails.forEach((userDetail) {
+      if (userDetail.user.toUpperCase().contains(text.toUpperCase())) {
+        _searchResult.add(userDetail);
+      }
+    });
+
+    setState(() {});
   }
 }
