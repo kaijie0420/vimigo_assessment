@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:vimigo_assessment/model/contact_details.dart';
+import 'package:vimigo_assessment/add_contact.dart';
 
 void main() {
   runApp(MyApp());
@@ -18,6 +19,10 @@ class MyApp extends StatelessWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: MyHomePage(title: 'Contact List'),
+      routes: {
+        // '/': (context) => _login,
+        '/addContact': (context) => AddContactPage(),
+      },
     );
   }
 }
@@ -32,7 +37,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  TextEditingController controller = new TextEditingController();
+  TextEditingController _searchController = new TextEditingController();
 
   List<ContactDetails> _contactDetails = [];
   List<ContactDetails> _searchResult = [];
@@ -42,9 +47,8 @@ class _MyHomePageState extends State<MyHomePage> {
     final jsonResult = json.decode(data);
 
     setState(() {
-      for (int i = 0; i < jsonResult.length; i++) {
-        jsonResult[i]['id'] = i;
-        _contactDetails.add(ContactDetails.fromJson(jsonResult[i]));
+      for (Map contact in jsonResult) {
+          _contactDetails.add(ContactDetails.fromJson(contact));
       }
     });
   }
@@ -64,14 +68,15 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: new Card(
-              child: new ListTile(
-                leading: new Icon(Icons.search),
-                title: new TextField(
-                  controller: controller,
-                  decoration: new InputDecoration(
-                      hintText: 'Search', border: InputBorder.none),
+            padding: EdgeInsets.all(8.0),
+            child: Card(
+              child: ListTile(
+                leading: Icon(Icons.search),
+                title: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search', border: InputBorder.none
+                  ),
                   onChanged: onSearchTextChanged,
                 ),
               ),
@@ -84,7 +89,20 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           )
         ],
-      )
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final addedContact = await Navigator.pushNamed(context, '/addContact');
+
+          if (addedContact != null) {
+            setState(() {
+              _contactDetails.add(addedContact);
+            });
+          }
+        },
+        child: Icon(Icons.add),
+        backgroundColor: Colors.green,
+      ),
     );
   }
 
@@ -103,12 +121,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   getContactList() {
     List<ContactDetails> list = [];
-    if (_searchResult.length != 0 || controller.text.isNotEmpty) {
+    if (_searchResult.length != 0 || _searchController.text.isNotEmpty) {
       list = _searchResult;
     } else {
       list = _contactDetails;
     }
-    return list.map((item) => ListTile(key: Key("${item.id}"), title: Text("${item.user}"), trailing: Icon(Icons.menu),)).toList();
+    return list.asMap().map((index, item) => MapEntry(index, ListTile(key: Key("$index"), title: Text("${item.user}"), trailing: Icon(Icons.menu)))).values.toList();
   }
 
   onSearchTextChanged(String text) async {
