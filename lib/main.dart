@@ -1,3 +1,8 @@
+import 'package:flame/animation.dart' as animation;
+import 'package:flame/flame.dart';
+import 'package:flame/spritesheet.dart';
+import 'package:flutter/material.dart' hide Animation;
+import 'package:flame/widgets/animation_widget.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
@@ -5,9 +10,33 @@ import 'model/contact_details.dart';
 import 'add_contact.dart';
 import 'view_contact.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Flame.images.load('animation.png');
+
+  final spriteList1 = List<int>.generate(11, (i) => i)
+    .map((e) => _animationSpriteSheet.getSprite(0, e))
+    .toList();
+  final spriteList2 = List<int>.generate(11, (i) => i)
+    .map((e) => _animationSpriteSheet.getSprite(1, e))
+    .toList();
+  final spriteList3 = List<int>.generate(10, (i) => i)
+    .map((e) => _animationSpriteSheet.getSprite(2, e))
+    .toList();
+  final spriteList = [...spriteList1, ...spriteList2, ...spriteList3];
+
+  _animation = animation.Animation.spriteList(spriteList, stepTime: 0.1);
   runApp(MyApp());
 }
+
+animation.Animation _animation;
+final _animationSpriteSheet = SpriteSheet(
+  imageName: 'animation.png',
+  columns: 12,
+  rows: 3,
+  textureWidth: 170,
+  textureHeight: 171,
+);
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -65,43 +94,53 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Card(
-              child: ListTile(
-                leading: Icon(Icons.search),
-                title: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search', border: InputBorder.none
-                  ),
-                  onChanged: onSearchTextChanged,
-                ),
-              ),
-            ),
-          ),
-          Expanded(child: 
-            ReorderableListView(
-              onReorder: onReorder,
-              children: getContactList(),
+        actions: <Widget>[
+          Builder(builder: (ctx) => 
+            IconButton(
+              icon: Icon(Icons.add),
+              iconSize: 30.0,
+              onPressed: () => _toAddContactPage(ctx),
             ),
           )
         ],
       ),
-      floatingActionButton: Builder(
-        builder: (context) {
-          return FloatingActionButton(
-            onPressed: () {
-              _toAddContactPage(context);
-            },
-            child: Icon(Icons.add),
-            backgroundColor: Colors.green,
-          );
-        },
-      )
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Card(
+                  child: ListTile(
+                    leading: Icon(Icons.search),
+                    title: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search', border: InputBorder.none
+                      ),
+                      onChanged: onSearchTextChanged,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(child: 
+                ReorderableListView(
+                  onReorder: onReorder,
+                  children: getContactList(),
+                ),
+              )
+            ],
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              width: 90,
+              height: 90,
+              child: AnimationWidget(animation: _animation),
+            ))
+        ]
+      ),
     );
   }
 
@@ -160,6 +199,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _toAddContactPage(BuildContext context) async {
+    Scaffold.of(context).hideCurrentSnackBar();
     final addedContact = await Navigator.pushNamed(context, '/addContact');
 
     if (addedContact != null) {

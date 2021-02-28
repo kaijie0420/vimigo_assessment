@@ -57,6 +57,9 @@ class ViewContactPage extends StatelessWidget {
   }
 
   String _formatCheckIn(String checkIn) {
+    if (checkIn.isEmpty) {
+      return checkIn;
+    }
     final inputFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
     final inputDate = inputFormat.parse(checkIn);
 
